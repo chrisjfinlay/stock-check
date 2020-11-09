@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TSGI/Flutter stock price comparison</title>
+    <link type="text/css" href="styles.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="main-content">
+        <p>Upon completion of Flutter buyover, TSGI shareholders will receive <a href="//s1.rationalcdn.com/vendors/stars-group/documents/TSG_Flutter_Entertainment_Press_Release.pdf" target="_blank">0.2253 Flutter shares for every TSGI share they hold</a>. <br />Therefore, if TSGI shares are valued at less than 22.53% of the Flutter price, those shares increase in value after the buyover. Shares valued at greater than 22.53% of the Flutter price will devalue. </p>
+        <p>Current CAD to GBP conversion rate = <span id="outputCADRate" class="value"></span></p>
+        <p>Current TSGI.TO stock price = <span id="outputTSGIRate" class="value"></span>
+            <br />Current FLTR.L stock price = <span id="outputFTLRate" class="value"></span></p>
+        <p>TSGI.TO converted to GBP = <span id="outputConvert" class="value"></span></p>
+        <p>TSGI.TO is currently <span id="outputPercent" class="value">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%</span> of FLTR.L.</p>
+        <p>Shares currently held will <span id="outputChange">????????</span> in value upon completion.</p>
+        <h3>Addtional Information</h3>
+        <p>TSGI.TO closed previously at: <span id="outputTSGIYest" class="value"></span></p>
+        <p>FLTR.L closed previously at: <span id="outputFLTRYest" class="value"></span></p>
+        <p><span onclick="printInfo()" style="cursor:pointer;">Click here to reload data.</span> Information last updated at: <span id="lastUpdated"></span></p>
+        <input type="text" placeholder="Enter number of TSGI options" id="numOptions" style="display: none;"> 
+        <p onclick="calcValue()" style="display: none; cursor:pointer" id="calc">Click here to calculate value of options</p>
+        <p id="optionsOutput"></p>
+        <p id="disclaimer" style="display: none;">This value is based on the currency exchange rate stated above. Actual value may be more or less depending on the mid-market rate used by the broker. For indication only.</p>
+        <div id="loading"><img src="loading-dots.gif" /></div>
+        <div id="error"></div>
+    </div>
+    <footer>
+        <p>This page uses real-time data from exchangeratesapi.io, and Yahoo! Finance via rapidapi.com. &copy; Chris Finlay, <span id="copyYear"></span>.</p>
+        <p><span id="joke"></span><br /><span id="jokeStats">Blame them if it's bad.</span></p>
+        <p onclick="printJoke()" style="cursor:pointer; padding-top:0">Click here for a new joke</p>
+    </footer>
+    <script type="text/javascript">
+        printInfo()
+        printJoke()
+        var d = new Date();
+        copyYear.innerHTML = d.getFullYear()
+
+        async function getCadRate() {
+            //retuns current GBP > CAD rate
+            try {
+                const response = await fetch('https://api.exchangeratesapi.io/latest?base=GBP')
+                const responseData = await response.json()
+                return responseData.rates.CAD.toFixed(2)
+            } catch (e) {
+                error.innerHTML = error.innerHTML + "Failed to get exchange rate data. <br />Error: " + e + "<br /><br />"
+            }
+        }
+
+        async function getShareInfo() {
+            //returns flutterPrice, tsgiPrice, flutterYesterday, tsgiYesterday
+            try {
+                const response = await fetch("https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/get-quotes?region=US&lang=en&symbols=TSGI.TO%252CFLTR.L", {
+                    "method": "GET",
+                    "headers": {
+                        "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
+                        "x-rapidapi-key": "dd18645e10mshf6a9595184ce545p196b3cjsn218089b26e45"
+                    }
+                })
+                const responseData = await response.json()
+                // Yahoo finance returns all data as strings, so we use * 1 to convert to a floating point
+                const tsgiPrice = (responseData.quoteResponse.result[0].regularMarketPrice) * 1
+                const tsgiYesterday = (responseData.quoteResponse.result[0].regularMarketPreviousClose) * 1
+                //London Stock Exchange returns prices in GBX, dividing by 100 to get the price in GBP, and round to 2 decimal places
+                const flutterPrice = ((responseData.quoteResponse.result[1].regularMarketPrice / 100).toFixed(2)) * 1
+                const flutterYesterday = ((responseData.quoteResponse.result[1].regularMarketPreviousClose / 100).toFixed(2)) * 1
+                return [flutterPrice, tsgiPrice, flutterYesterday, tsgiYesterday]
+            } catch (e) {
+                // if the WTD API isn't working, these hardcoded values can be returned. Not great solution, obvs
+                const flutterPrice = 89.50
+                const tsgiPrice = 35.12
+                const fltrYesterday = 0
+                const tsgiYesterday = 0
+                error.innerHTML = error.innerHTML + "Failed to get share data. <br />Error: " + e + "<br /><br />"
+                return [flutterPrice, tsgiPrice, fltrYesterday, tsgiYesterday]
+            }
+        }
+
+        async function printJoke() {
+            //does not return any information, instead simply prints the joke to the footer
+            try {
+                const response = await fetch("https://joke3.p.rapidapi.com/v1/joke?nsfw=true", {
+                    "method": "GET",
+                    "headers": {
+                        "x-rapidapi-host": "joke3.p.rapidapi.com",
+                        "x-rapidapi-key": "dd18645e10mshf6a9595184ce545p196b3cjsn218089b26e45"
+                    }
+                })
+                const responseData = await response.json()
+                joke.innerHTML = responseData.content
+                const jokeID = responseData.id
+                jokeStats.innerHTML = "Joke provided by LemmoTresto @ rapidapi.com. Click an arrow to upvote or downvote the joke: <img src='upvote.png' id='upvote' /> <img src='downvote.png' id='downvote' />"
+                document.getElementById('upvote').addEventListener('click', function () {
+                    voteJoke(jokeID, 'upvote')
+                }, false)
+                document.getElementById('downvote').addEventListener('click', function () {
+                    voteJoke(jokeID, 'downvote')
+                }, false)
+            } catch (e) {
+                joke.innerHTML = "There is no joke. This is not a joke. There is literally no joke. Stop laughing. There was an error. Stop laughing and fix it. Or find someone who can."
+                jokeStats.innerHTML = ""
+            }
+        }
+
+        async function printInfo() {
+            error.innerHTML = ""
+            d = new Date()
+            //JS minutes are stupid and output 0-9 as single digits. This throws a zero onto the number if it's a single digit.
+            const minutes = (d.getMinutes() < 10 ? '0' : '') + d.getMinutes()
+            loading.innerHTML = '<img src="loading-dots.gif" />'
+            try {
+                const cadRate = await getCadRate()
+                const shareInfo = await getShareInfo()
+                outputCADRate.innerHTML = cadRate
+                outputTSGIRate.innerHTML = shareInfo[1]
+                outputFTLRate.innerHTML = shareInfo[0]
+                const convertedTSGI = (shareInfo[1] / cadRate).toFixed(2)
+                outputConvert.innerHTML = convertedTSGI
+                const tsflPercentage = ((convertedTSGI / shareInfo[0]) * 100).toFixed(2)
+                outputPercent.innerHTML = tsflPercentage + '%'
+                if (tsflPercentage < 22.53) {
+                    outputChange.className = "good"
+                    outputChange.innerHTML = "increase"
+                } else if (tsflPercentage > 22.53) {
+                    outputChange.className = "bad"
+                    outputChange.innerHTML = "decrease"
+                } else {
+                    outputChange.className = "value"
+                    outputChange.innerHTML = "not change in value"
+                }
+                outputTSGIYest.innerHTML = shareInfo[3]
+                outputFLTRYest.innerHTML = shareInfo[2]
+                if (shareInfo[3] < shareInfo[1]) {
+                    outputTSGIRate.className = "value up"
+                } else {
+                    outputTSGIRate.className = "value down"
+                } 
+                if (shareInfo[2] < shareInfo[0]) {
+                    outputFTLRate.className = "value up"
+                } else {
+                    outputFTLRate.className = "value down"
+                }
+                loading.innerHTML = ""
+                numOptions.style.display="block"
+                calc.style.display="block"
+            } catch (e) {
+                error.innerHTML = error.innerHTML + "Failed to get or process data. <br />Error: " + e + "<br /><br />"
+                loading.innerHTML = ""
+            }
+            const dateTimeOutput = d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear() + " @ " + d.getHours() + ":" + minutes
+            lastUpdated.innerHTML = dateTimeOutput
+        }
+
+        async function voteJoke(id, vote) {
+            const url = 'https://joke3.p.rapidapi.com/v1/joke/' + id + '/' + vote
+            try {
+                await fetch(url, {
+                    "method": "POST",
+                    "headers": {
+                        "x-rapidapi-host": "joke3.p.rapidapi.com",
+                        "x-rapidapi-key": "dd18645e10mshf6a9595184ce545p196b3cjsn218089b26e45",
+                        "content-type": "application/x-www-form-urlencoded"
+                    }
+                })
+                const response = await fetch("https://joke3.p.rapidapi.com/v1/joke/" + id, {
+                    "method": "GET",
+                    "headers": {
+                        "x-rapidapi-host": "joke3.p.rapidapi.com",
+                        "x-rapidapi-key": "dd18645e10mshf6a9595184ce545p196b3cjsn218089b26e45"
+                    }
+                })
+                const responseData = await response.json()
+                joke.innerHTML = responseData.content
+                jokeStats.innerHTML = "Joke provided by LemmoTresto @ rapidapi.com. Updated joke stats: " + responseData.upvotes + " <img src='upvote.png' /> " + responseData.downvotes + " <img src='downvote.png' />. Total points: " + (responseData.upvotes - responseData.downvotes) + '.'
+
+            } catch (e) {
+
+            }
+        }
+
+        function calcValue() {
+            const tsgiStrike = 28.65
+            const flutterStrike = 127.17
+            const flutterPrice = document.getElementById("outputFTLRate").innerHTML
+            const cadRate = document.getElementById("outputCADRate").innerHTML
+            const numberOfOptions = document.getElementById("numOptions").value
+            console.log(numberOfOptions)
+            const flutterOptions = Math.floor((numberOfOptions/100) * 22.5)
+            console.log(flutterOptions)
+            const optionsValue = (((flutterPrice * cadRate) * flutterOptions) - (flutterStrike * flutterOptions))
+            //console.log(flutterPrice, cadRate, flutterStrike, flutterOptions)
+            console.log(optionsValue.toFixed(2))
+            outputString = `Your ${numberOfOptions} TSGI options will be converted to ${flutterOptions} FLTR Options. Your profit if you exercise them will be ${optionsValue.toFixed(2)} CAD - or ${(optionsValue/cadRate).toFixed(2)} GBP`
+            optionsOutput.innerHTML = outputString
+            disclaimer.style.display="block"
+        }
+
+    </script>
+</body>
+
+</html>
