@@ -55,7 +55,7 @@
                     "method": "GET",
                     "headers": {
                         "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
-                        "x-rapidapi-key": "dd18645e10mshf6a9595184ce545p196b3cjsn218089b26e45"
+                        "x-rapidapi-key": "INSERTYOURRAPIDAPIKEYHERE"
                     }
                 })
                 const responseData = await response.json()
@@ -84,7 +84,7 @@
                     "method": "GET",
                     "headers": {
                         "x-rapidapi-host": "joke3.p.rapidapi.com",
-                        "x-rapidapi-key": "dd18645e10mshf6a9595184ce545p196b3cjsn218089b26e45"
+                        "x-rapidapi-key": "INSERTYOURRAPIDAPIKEYHERE"
                     }
                 })
                 const responseData = await response.json()
@@ -159,7 +159,7 @@
                     "method": "POST",
                     "headers": {
                         "x-rapidapi-host": "joke3.p.rapidapi.com",
-                        "x-rapidapi-key": "dd18645e10mshf6a9595184ce545p196b3cjsn218089b26e45",
+                        "x-rapidapi-key": "INSERTYOURRAPIDAPIKEYHERE",
                         "content-type": "application/x-www-form-urlencoded"
                     }
                 })
@@ -167,7 +167,7 @@
                     "method": "GET",
                     "headers": {
                         "x-rapidapi-host": "joke3.p.rapidapi.com",
-                        "x-rapidapi-key": "dd18645e10mshf6a9595184ce545p196b3cjsn218089b26e45"
+                        "x-rapidapi-key": "INSERTYOURRAPIDAPIKEYHERE"
                     }
                 })
                 const responseData = await response.json()
